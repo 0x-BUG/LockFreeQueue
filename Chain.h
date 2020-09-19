@@ -1,4 +1,4 @@
-/* Copyright (c) 2020, sudden-death-bug
+/* Copyright (c) 2020, yoo.huang_@outlook.com
 
 All rights reserved.
 
