@@ -59,18 +59,18 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <functional>
 
 template<typename T>
-struct alignas(std::atomic<T*>) HazardPointer
+struct alignas(void*) HazardPointer
 {
     std::atomic<std::thread::id> id_;
     std::atomic<T*> pointer_;
 };
 
 template<typename Node>
-class ContainerOfNodes
+class alignas(void*) ContainerOfNodes
 {
 public:
     using GetNextPointer = std::atomic<Node*>& (*)(Node*);
-    using Chain = Chain<Node, GetNextPointer>;
+    using Chained = Chain<Node, GetNextPointer>;
 };
 
 template<typename HpNode>
@@ -80,7 +80,7 @@ void Reclaim(const HpNode* node)
 }
 
 template<typename HpNode>
-class alignas(std::atomic<HpNode*>) MsQueue
+class alignas(void*) MsQueue
 {
 public:
     std::atomic<HpNode*> head_;
@@ -229,7 +229,7 @@ template<typename HpNode, size_t PER_THREAD_HP_NUM, size_t LEN>
 class QueueHazardPointerOwner;
 
 template<typename HpNode, size_t LEN>
-class alignas(std::atomic<HpNode*>) HazardPointersSingleton
+class alignas(void*) HazardPointersSingleton
     : private QueueHazardPointerIndex
 {
 private:
@@ -292,7 +292,7 @@ public:
     {
         std::atomic<HpNode*>& hazardHead(Hp::GetHazardPointer(CURRENT));
         std::atomic<HpNode*>& hazardNext(Hp::GetHazardPointer(NEXT));
-        typename ContainerOfNodes<HpNode>::Chain chain(GetHpNextNode<HpNode>);
+        typename ContainerOfNodes<HpNode>::Chained chain(GetHpNextNode<HpNode>);
         for (;;)
         {
             HpNode* oldHead(queue_.pop(hazardHead, hazardNext,
@@ -346,13 +346,13 @@ void InitialHazardPointer(HazardPointer<HpNode>* global,
 }
 
 template<typename HpNode, size_t PER_THREAD_HP_NUM, size_t LEN>
-class alignas(std::atomic<HpNode*>) QueueHazardPointerOwner
+class alignas(void*) QueueHazardPointerOwner
 {
 private:
     using Hps = HazardPointersSingleton<HpNode, LEN>;
 
     HazardPointer<HpNode>* hp_[PER_THREAD_HP_NUM];
-    typename ContainerOfNodes<HpNode>::Chain chain_;
+    typename ContainerOfNodes<HpNode>::Chained chain_;
     size_t count_;
 
     QueueHazardPointerOwner()

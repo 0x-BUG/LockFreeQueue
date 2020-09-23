@@ -58,12 +58,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <memory>
 
 template<typename T, size_t MAX_THREADS, size_t GC_NUM = 0>
-class alignas(std::atomic<T*>) LockFreeQueue
+class alignas(void*) LockFreeQueue
     : private QueueHazardPointerIndex
 {
 public:
     using Node = node_type::NodeWithHazardPointer<T>;
-    using Chain = Chain<Node, void>;
+    using Chained = Chain<Node, void>;
 
 private:
     using Hp = QueueHazardPointerOwner<
@@ -122,7 +122,7 @@ public:
         hazardTail.store(nullptr, std::memory_order_release);
         return ret;
     }
-    bool append(Chain& chain)
+    bool append(Chained& chain)
     {
         if (chain.isEmpty())
         {
